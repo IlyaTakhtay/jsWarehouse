@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+  <script type="module" src="index.js"></script>
+  <title>Custom Cargo Manager</title>
+</head>
+<body>
+  <dialog class="app-modal" id = app-add-modal>
+    <form method="dialog" class="app-modal__form">
+      <select name="name" class="cargo-name" id = "cargoName-Add" placeholder="Название груза" required>
+        <option>Пункт 1</option>
+        <option>Пункт 2</option>
+      </select>
+      <input type="number" name="amount" class="cargo-amount" id = "cargoCount-Add" placeholder="Количество груза" min="1" required>
+      <button type="submit" class="dialog-ok__btn">OK</button>
+    </form>
+    <button type="cancel" class="dialog-close__btn">Отмена</button>
+  </dialog>
+  <dialog class="app-modal" id = app-edit-modal>
+    <form method="dialog" class="app-modal__form">
+      <select name="name" class="cargo-name" id = "cargoName-Edit" placeholder="Название груза" required>
+        <option>Пункт 1</option>
+        <option>Пункт 2</option>
+      </select>
+      <input type="number" name="amount" class="cargo-amount" id = "cargoCount-Edit" placeholder="Количество груза" min="1" required>
+      <button type="submit" class="dialog-ok__btn">OK</button>
+    </form>
+    <button type="cancel" class="dialog-close__btn">Отмена</button>
+  </dialog>
+
+  <header class="app-header" id="app-header">
+    <h1 class="app-header__app-name">Private Warehouse Company</h1>
+    <div class="app-header__user-and-controls">
+      <div class="user-info">
+        <div class="user-info__avatar"></div>
+        <span class="user-info__username">
+          Keanu Reeves
+        </span>
+      </div>
+      <label class="toggle-switch" id="theme-switch">
+        <input type="checkbox" class="toggle-switch__checkbox" />
+        <div class="toggle-switch__slider"></div>
+      </label>
+    </div>
+  </header>
+  <main class="app-main" id="app-main">
+    <ul class="order-list">
+      <li class="order-list__item orderlist-adder">
+        <button type="button" class="orderlist-adder__btn">
+          &#10010; Добавить заказ
+        </button>
+      </li>
+    </ul>
+  </main>
+</body>
+</html>
