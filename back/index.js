@@ -8,13 +8,9 @@ dotenv.config({
 const appHost = process.env.APP_HOST;
 const appPort = process.env.APP_PORT;
 
-// устанавливаем движок для сервера
-// var http = require('http');  
 const path = require('path');
-// подключение express
 const express = require('express');
 
-// создаем объект приложения
 const app = express();
 const db = new DB();
 
@@ -45,8 +41,7 @@ app.get('/products', async(req,res) => {
     res.json({
         timestamp: new Date().toISOString(),
         statusCode : 500,
-        // Чтение ошибок не работает
-        message : `Getting products error ${err.error || err.message}`
+        message : `Getting products error ${err.error || err.error.message}`
     });
   }
 });
@@ -54,8 +49,8 @@ app.get('/products', async(req,res) => {
 app.get('/productAmount/:productName', async(req,res) => {
   try {
     const {productName} = req.params;
+    console.log('prodcutAmount params:', productName)
     const porductsList = await db.getListOfProducts({ productName: productName })
-    // const porductsList = dbProducts.map(product => product.warehouse_product_name)
     res.statusMessage = 'OK';
     res.json({ porductsList });
   } catch (err) {
@@ -64,8 +59,7 @@ app.get('/productAmount/:productName', async(req,res) => {
     res.json({
         timestamp: new Date().toISOString(),
         statusCode : 500,
-        // Чтение ошибок не работает
-        message : `Getting productCount error ${err.error || err.message}`
+        message : `Getting productCount error ${err.error || err.error.message}`
     });
   }
 });
@@ -97,7 +91,6 @@ try{
     res.json({
       timestamp: new Date().toISOString(),
       statusCode : res.statusCode,
-      // Чтение ошибок не работает
       message : `Adding Cargos error ${err.error || err.error.message}`
     });
 }
@@ -110,7 +103,6 @@ app.get('/orderlists', async(req,res) => {
     const [dbOrderlists, dbCargos] = await Promise.all([db.getListOfOrder({TODAY:true}),db.getListOfCargo({orderID:''})])
     const cargos = dbCargos.map(({cargo_id, product_name, product_count_order, order_id}) => ({ cargoID: cargo_id, productInCargo: product_name, cargoAmount: product_count_order, order_id , cargoPosition: (posCounter++) }));
 
-    //колхоз но работает
     const CargosDictionary = cargos.reduce((acc, cargo) => {
       const { order_id, ...restCargo } = cargo; // Исключаем order_id из каждого объекта
     
@@ -120,8 +112,6 @@ app.get('/orderlists', async(req,res) => {
       }
       return acc;
     }, {});
-    
-    //колхоз но работает
 
     posCounter = 0;
     const orderlists = dbOrderlists.map(Orderlist => ({
@@ -136,8 +126,7 @@ app.get('/orderlists', async(req,res) => {
     res.json({
         timestamp: new Date().toISOString(),
         statusCode : 500,
-        // Чтение ошибок не работает
-        message : `Adding Orderlist error ${err.error || err.message}`
+        message : `Adding Orderlist error ${err.error || err.error.message}`
     });
   }
 });
@@ -167,8 +156,7 @@ try{
     res.json({
       timestamp: new Date().toISOString(),
       statusCode : res.statusCode,
-      // Чтение ошибок не работает ( Тут работает ) (Не работает)
-      message : `Adding Orderlist error ${err.error || err.message}`
+      message : `Adding Orderlist error ${err.error || err.error.message}`
     });
 }
 });
@@ -196,8 +184,7 @@ try{
     res.json({
       timestamp: new Date().toISOString(),
       statusCode : res.statusCode,
-      // Чтение ошибок не работает ( Тут работает ) (Не работает)
-      message : `Adding Orderlist error ${err.error || err.message}`
+      message : `Adding Orderlist error ${err.error || err.error.message}`
     });
 }
 
@@ -229,7 +216,6 @@ try{
     res.json({
       timestamp: new Date().toISOString(),
       statusCode : res.statusCode,
-      // Чтение ошибок не работает
       message : `Adding Cargos error ${err.error || err.error.message}`
     });
 }
@@ -261,46 +247,12 @@ app.patch('/cargos/:cargoID', async(req,res) => {
       res.json({
         timestamp: new Date().toISOString(),
         statusCode : res.statusCode,
-        // Чтение ошибок не работает
         message : `Update cargo error ${err.error || err.error.message}`
       });
   }
   
 });
-// Под вопросом ??? Это у нас скорее перемещение Карги. МММ а может это апдейт а не перемещение ?
-// edit several cargos orderID
-// app.patch('/cargos', async(req,res) => {
-//   try{
-//     const { reorderedCargo } = req.params;
-//     await Promise.all(
-//       reorderedCargo.map(({cargoID, orderID}) => db.updateCargo({ cargoID, orderID }))
-//     );
-    
-//     res.statusCode = 200;
-//     res.statusMessage = 'Ok',
-//     res.send();
-//   } catch (err) {
-//     switch(err.type) {
-//       case 'client':
-//         res.statusCode = 400;
-//         res.statusMessage = 'Bad request';
-//         break;
-//       default:
-//         res.statusCode = 500;
-//         res.statusMessage = 'Internal server error';
-//       }
-//       res.json({
-//         timestamp: new Date().toISOString(),
-//         statusCode : res.statusCode,
-//         // Чтение ошибок не работает
-//         message : `Update Cargoes error ${err.error || err.error.message}`
-//       });
-//   }
-  
-// });
 
-
-// Либо вот так правильно переносить Cargos
 // move cargos in Orders
 app.patch('/cargos', async(req,res) => {
   try{
@@ -324,7 +276,6 @@ app.patch('/cargos', async(req,res) => {
       res.json({
         timestamp: new Date().toISOString(),
         statusCode : res.statusCode,
-        // Чтение ошибок не работает
         message : `Move Task error ${err.error || err.error.message}`
       });
   }
@@ -353,7 +304,6 @@ app.delete('/cargos/:cargoID', async(req,res) => {
       res.json({
         timestamp: new Date().toISOString(),
         statusCode : res.statusCode,
-        // Чтение ошибок не работает
         message : `Delete cargo error ${err.error || err.error.message}`
       });
   }
@@ -383,14 +333,12 @@ app.delete('/orderlists/:orderID', async(req,res) => {
       res.json({
         timestamp: new Date().toISOString(),
         statusCode : res.statusCode,
-        // Чтение ошибок не работает
         message : `Delete cargo error ${err.error || err.error.message}`
       });
   }
   
 });
 
-//TODO
 // body parsing middleware
 app.use('/warehouse', express.json());
 // update warehouse
@@ -419,8 +367,7 @@ try{
     res.json({
       timestamp: new Date().toISOString(),
       statusCode : res.statusCode,
-      // Чтение ошибок не работает ( Тут работает ) (Не работает)
-      message : `Adding Orderlist error ${err.error || err.message}`
+      message : `Adding Orderlist error ${err.error || err.error.message}`
     });
 }
 
@@ -435,24 +382,7 @@ const server = app.listen(Number(appPort), appHost, async() => {
     console.log('app shut down')
     process.exit(100);
   }
-  console.log(`Server started at host http://${appHost}:${appPort}`);
-
-
-// JSON.stringify(await db.getListOfProducts())
-const cargo_id = crypto.randomUUID()
-const order_id = crypto.randomUUID()
-  // await db.addCargo({cargoID: cargo_id, cargoName: "Мемы", cargoCount: 10, orderID: 1, position: 1})
-  // await db.addOrder({orderID: order_id, name: 'Vladimir', orderDate: '21.01.24', position: 3})
-  // console.log(await db.deleteCargo( {cargoID: 'd8b4132b-410f-4903-8b77-744c722bb983' } ));
-  // console.log(await db.deleteOrder({orderID: '60854c02-4c51-48d9-a6be-c074c31097b2'}))
-  // console.log(await db.updateOrdersList({orderID: 235235325, customerName: 'BIBA', orderDate: '01.02.02'}))
-  // console.log(await db.updateCargo({cargoID: 4, cargoName: 'Бубсы', cargoCount: 2, orderID: 1, position: 30}))
-  console.log(await db.getListOfCargo({orderID:''}))
-  // console.log(await db.moveCargo({cargoID:1, srcOrderID:1, destOrderID:2 }))
-  console.log(await db.getListOfOrder( {TODAY: true} ));
-  console.log(await db.getListOfProducts());
-  console.log(await db.getListOfCargo({orderID: 2}))
-  
+  console.log(`Server started at host http://${appHost}:${appPort}`); 
 });
 
 process.on('SIGTERM', () =>{ 

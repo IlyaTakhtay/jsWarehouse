@@ -48,28 +48,22 @@ export default class Orderlist {
   deleteOrderlist = async ( ) => {
     try {
       const deleteOrderlsitResult = await AppModel.deleteOrderlist( {orderID: this.#orderlistID} );
-
       console.log(deleteOrderlsitResult)
     } catch (err) {
       console.error(err)
     }
     const orderlistElement = document.getElementById(this.#orderlistID);
     orderlistElement.remove();
-    console.log("del")//
   };
 
   reorderCargos = () => {
-    console.log(document.querySelector(`[id="${this.#orderlistID}"] .orderlist__cargo-list`));
     const orderedCargosIDs = Array.from(
       document.querySelector(`[id="${this.#orderlistID}"] .orderlist__cargo-list`).children,
       elem => elem.getAttribute('id')
     );
-
     orderedCargosIDs.forEach((cargoID, position) => {
       this.#cargos.find(cargo => cargo.cargoID === cargoID).cargoPosition = position;
     });
-
-    console.log(this.#cargos);
   };
 
   onEditOrderlist = async () => {
@@ -78,15 +72,12 @@ export default class Orderlist {
     var Changed = false
     inputElements.forEach((currentInputElement) => {
       if (currentInputElement.value){
-        // можно ещё проверять совпадают ли значения 
         if ((currentInputElement.type == 'text') && (this.#orderlistName != currentInputElement.value)) {
           this.#orderlistName = currentInputElement.value
-          console.log('Новый текст',this.#orderlistName)
           Changed = true
         }
         if ((currentInputElement.type == 'date') && (this.#orderlistDate != currentInputElement.value))  {
           this.#orderlistDate = currentInputElement.value
-          console.log('Новый новая дата',this.#orderlistDate)
           Changed = true
         }
         if (currentInputElement.hasAttribute('readOnly')){
@@ -98,7 +89,6 @@ export default class Orderlist {
     })
     if (Changed){
       try {
-        console.log(this.#orderlistName)
       const updateOrderlistResult = await AppModel.updateOrderlist( {
         orderID: this.#orderlistID,
         name: this.#orderlistName,
@@ -116,19 +106,15 @@ export default class Orderlist {
     const finded = this.#cargos.find(cargo => cargo.productInCargo === productInCargo)
     
     if (finded) {
-      finded.cargoAmount = String(Number(finded.cargoAmount) + Number(amount))
-      document.querySelector(`[id="${finded.cargoID}"] span.cargo__text`).innerHTML = finded.cargoAmount
       try {
-        console.log('yep2',finded)
-        console.log('yep2',finded.productInCargo )
+        const currentAvailable = await AppModel.getProductAmount({productName:productInCargo})
 
-        const currentAvailable = await AppModel.getProductAmount({productName:finded.productInCargo})
-        console.log('ftechet',currentAvailable[0].warehouse_product_count)
-        console.log(finded.cargoAmount)
-        if (currentAvailable[0].warehouse_product_count <= Number(finded.cargoAmount)){
+        if (currentAvailable[0].warehouse_product_count < Number(finded.cargoAmount) + Number(amount)){
           alert("Недостаточно на складе")
           return;
         }
+        finded.cargoAmount = String(Number(finded.cargoAmount) + Number(amount))
+        document.querySelector(`[id="${finded.cargoID}"] span.cargo__text`).innerHTML = finded.cargoAmount
 
         const updateCargoResult = await AppModel.updateCargo({
           cargoID: finded.cargoID, 
@@ -140,8 +126,13 @@ export default class Orderlist {
         console.error(err)
       }
     } else {
-
+      
       try {
+        const currentAvailable = await AppModel.getProductAmount({productName:productInCargo})
+        if (currentAvailable[0].warehouse_product_count < Number(amount)){
+          alert("Недостаточно на складе")
+          return;
+        }
         const cargoID = crypto.randomUUID();
         const addCargoResult = await AppModel.addCargo({
           cargoID,
@@ -199,7 +190,6 @@ export default class Orderlist {
   };
 
   render() {
-    console.log("↑")
     const liElement = document.createElement('li');
     liElement.classList.add(
       'order-list__item',
@@ -225,7 +215,7 @@ export default class Orderlist {
     orderIdSpan.innerHTML = `${this.#orderlistID}`;
     liElement.appendChild(ListNum);
 
-    // приколы с датой в жабаскрипте
+    // Make a today Date
     const currentDate = new Date();
 
     const year = currentDate.getFullYear();
@@ -233,15 +223,13 @@ export default class Orderlist {
     const day = currentDate.getDate().toString().padStart(2, '0');
 
     const formattedDate = `${year}-${month}-${day}`;
-    // приколы с датой в жабаскрипте
+     // Make a today Date
 
-    //тут струячим плейсхолдеры для даты и времени на каждый элемент
     const inputNameTag = document.createElement('input');
     inputNameTag.type = "text"
     inputNameTag.classList.add("orderlist-adder__input")
     inputNameTag.placeholder = "Имя заказчика" 
     liElement.appendChild(inputNameTag);
-
 
     const inputDataTag = document.createElement('input');
     inputDataTag.type = "date"
@@ -250,7 +238,6 @@ export default class Orderlist {
     inputDataTag.min = formattedDate
     liElement.appendChild(inputDataTag);
     
-    //тут струячим плейсхолдеры для даты и времени на каждый элемент
     const saveButton = document.createElement('button');
     saveButton.setAttribute('type', 'button');
     saveButton.classList.add('orderlist__edit-orderlist-btn');
@@ -258,15 +245,15 @@ export default class Orderlist {
     saveButton.addEventListener('click', this.onEditOrderlist);
     liElement.appendChild(saveButton);
     
-    // работа с тасками
+    // working with cargos
     const innerUlElement = document.createElement('ul');
     innerUlElement.classList.add('orderlist__cargo-list');
     liElement.appendChild(innerUlElement);
 
-    // добавление тасков
+    // adding cargos
     const addButton = document.createElement('button');
     addButton.setAttribute('type', 'button');
-    addButton.classList.add('orderlist__add-cargo-btn');
+    addButton.classList.add('orderlist__add-cargo-btn');  
     addButton.innerHTML = '&#10010; Добавить карточку';
     addButton.addEventListener('click', () => {
       document.getElementById('app-add-modal').showModal();

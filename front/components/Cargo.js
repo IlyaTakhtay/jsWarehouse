@@ -19,14 +19,13 @@ export default class Cargo {
   }
 
   get cargoID() { return this.#cargoID; }
-//??
+
   get cargoAmount() { return this.#cargoAmount; }
   set cargoAmount(value) {
     if (typeof value === 'string') {
       this.#cargoAmount = value;
     }
   }
-//??
   get productInCargo() { return this.#productInCargo; }
   set productInCargo(value) {
     if (typeof value === 'string') {
@@ -79,7 +78,7 @@ export default class Cargo {
     editBtn.classList.add('cargo__contol-btn', 'edit-icon');
     editBtn.addEventListener('click', () => {
       document.getElementById('app-edit-modal').showModal();
-      localStorage.setItem('editCargoID', this.#cargoID)
+      localStorage.setItem('editCargoID', this.#cargoID);
     });
     lowerRowDiv.appendChild(editBtn);
 

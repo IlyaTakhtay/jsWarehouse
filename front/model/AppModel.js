@@ -1,4 +1,4 @@
-// здесь настроить .env файл
+// should to set .env file
 export default class AppModel {
 
     static async getListOfProducts(){

@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 function getDate () {
   var today = new Date();
   var dd = String(today.getDate()).padStart(2, '0');
-  var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+  var mm = String(today.getMonth() + 1).padStart(2, '0');
   var yyyy = today.getFullYear();
   today = yyyy + '-' + mm + '-' + dd;
 return today
@@ -58,9 +58,7 @@ class DB {
   async getListOfProducts( {productName} = {productName:''} ) {
     let query = null;
     const queryParams = [];
-    console.log('Авто',productName)
     if (!productName) {
-      console.log("noprodoName")
       query = 'SELECT warehouse_product_name FROM test.warehouse;'
     } else {
       query = 'SELECT * FROM test.warehouse WHERE warehouse_product_name = ?;'
@@ -102,12 +100,10 @@ class DB {
     }
   }
 
-  // возможно сюда придется добавить параметр типо where order_id = orderID
   async getListOfOrder( { TODAY } ) {
     try {
       if (TODAY) {
         const orderDate = getDate();
-        console.log(orderDate)
         const [orderlist] = await this.#dbClient.query(
           'SELECT * FROM orders_list WHERE order_date >= DATE(?) OR order_date IS NULL',
           [String(orderDate)]
@@ -238,10 +234,6 @@ class DB {
     }
   
     try {
-      console.log ('GOT PARAMS',cargoID, 
-        cargoName, 
-        cargoCount,
-        orderID,)
       await this.#dbClient.query( 
         'INSERT into ORDER_LIST (cargo_id, product_name, product_count_order, order_id) VALUES (?, ?, ?, ?);',
         [String(cargoID), String(cargoName), Number(cargoCount), String(orderID)]
@@ -303,8 +295,6 @@ class DB {
       query = 'UPDATE order_list SET product_count_order = ? WHERE cargo_id = ?'
       queryParams.push(Number(cargoCount), String(cargoID))
     }
-    console.log(query)
-    console.log('query params',queryParams)
     try {
       await this.#dbClient.query(query,queryParams);
     } catch (error) {
@@ -438,7 +428,7 @@ class DB {
       })
     }
   }
-  // TODO
+
   async increaseProductsAmount ({ productName, productAmount, productItem } = { productName : null, productItem: '', productAmount: -1} ) {
     if (!productName || productAmount < 0){
       const errCargo = `Move Cargo has wrong params: productName: ${productName}, productAmount: ${productAmount}`;

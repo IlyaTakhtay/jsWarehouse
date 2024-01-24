@@ -35,7 +35,6 @@ export default class {
         destOrderlist.pushCargo({ cargo: movedCargo });
   
         srcOrderlist.reorderCargos();
-        console.log(moveCargoResult)
       }
   
       destOrderlist.reorderCargos();
@@ -61,7 +60,6 @@ export default class {
 
     if ((findedSameCargo) && (findedSameCargo.cargoID != cargoID)) {
       alert("Такой товар уже есть");
-      console.log("YEST PROBITIE", findedSameCargo.cargoID)
       return;
     }
 
@@ -72,10 +70,8 @@ export default class {
     (!newProductInCargo || newProductInCargo === currentProductInCargo)) return;  
     
     try {
-      const currentAvailable = await AppModel.getProductAmount({productName:newProductInCargo})
-      console.log('ftechet',currentAvailable[0].warehouse_product_count)
-      console.log(newCargoAmount)
-      if (currentAvailable[0].warehouse_product_count <= Number(newCargoAmount)){
+      const currentAvailableResult = await AppModel.getProductAmount({productName:newProductInCargo})
+      if (currentAvailableResult[0].warehouse_product_count < Number(newCargoAmount)){
         alert("Недостаточно на складе")
         return;
       }
@@ -91,7 +87,7 @@ export default class {
       document.querySelector(`[id="${cargoID}"] span.cargo__text`).innerHTML = newCargoAmount;
       document.querySelector(`[id="${cargoID}"] span.cargo__number`).innerHTML = newProductInCargo;
       
-      console.log(currentAvailable)
+      console.log(currentAvailableResult)
       console.log(updateCargoResult)
     } catch (err) {
       console.error(err)
@@ -106,11 +102,7 @@ export default class {
       findedCargo = orderlist.getCargoByID({ cargoID });
       if (findedCargo) break;
     }
-    
-    //окно подтверждения
-    // const cargoShouldBeDeleted = confirm(`Задача '${findedCargo.cargoAmount}' будет удалена. Прододлжить?`);
 
-    // if (!cargoShouldBeDeleted) return;
     try {
       const deleteCargoResult = await AppModel.deleteCargo( {cargoID} );
 
@@ -152,20 +144,17 @@ export default class {
   }
 
   cargoNameSelectorAppender = async ( {selector} ) => {
-    console.log('get inside Add')
     var selector
     if (selector == 'ADD') { selector = document.getElementById("cargoName-Add")}
     if (selector == 'EDIT') { selector = document.getElementById("cargoName-Edit")}
     try {
-      const productsList = await AppModel.getListOfProducts()
-      console.log(productsList)
-      productsList.forEach( product => {
-        console.log(product)
+      const productsListResult = await AppModel.getListOfProducts()
+      productsListResult.forEach( product => {
         const optionElement = document.createElement('option')
         optionElement.text = product
         selector.add(optionElement)
       })
-      console.log(productsList)
+      console.log(productsListResult)
     } catch (error) {
       console.error(error)
     }
@@ -174,85 +163,68 @@ export default class {
 
   initAddModal = () => {
     const cagroAddDialog = document.getElementById("app-add-modal");
-    console.log(cagroAddDialog)
     this.cargoNameSelectorAppender({ selector: 'ADD'});
     const cargoCloseHandler = () => {
       cagroAddDialog.close()
       localStorage.setItem("addOrderlistID", '');
-      // cagroDialog.querySelector(".cargo-name").value() = ''
     }
 
-    const cargoOkHandler = () => {
+    const cargoOkHandler = (event) => {
+      event.preventDefault();
       const orderlistID = localStorage.getItem("addOrderlistID");
       const cargoInputName = document.getElementById("cargoName-Add").value
       const cargoInputCount = document.getElementById("cargoCount-Add").value
-      console.log("crgID",orderlistID)
-      console.log("crgName",cargoInputName)
-      console.log("crgCount",cargoInputCount)
-      if (orderlistID && cargoInputCount && cargoInputCount){
-        console.log(cargoInputName)
+
+      if (orderlistID && cargoInputCount && cargoInputCount  && Number(cargoInputCount) > -1 && Number(cargoInputCount) < 9999){
         this.#orderlists.find(orderlist => orderlist.orderlistID === orderlistID)
         .appendNewCargo({productInCargo: cargoInputName, amount: cargoInputCount})
         cargoCloseHandler()
       }
     }
-    cagroAddDialog.querySelector(".dialog-ok__btn").addEventListener("click", cargoOkHandler)
+    cagroAddDialog.querySelector(".dialog-ok__btn").addEventListener("click", (event) => cargoOkHandler(event))
     cagroAddDialog.querySelector(".dialog-close__btn").addEventListener("click", cargoCloseHandler)
   };
 
   initEditModal = () => {
     const cagroEditDialog = document.getElementById("app-edit-modal");
-    console.log("no",cagroEditDialog)
     this.cargoNameSelectorAppender({ selector: 'EDIT' });
     const cargoCloseHandler = () => {
       cagroEditDialog.close()
       localStorage.setItem("editCargoID", '');
-      // cagroDialog.querySelector(".cargo-name").value() = ''
     }
 
-    const cargoOkHandler = () => {
+    const cargoOkHandler = (event) => {
+      event.preventDefault(event);
       const cargoID = localStorage.getItem("editCargoID");
       const cargoInputName = document.getElementById("cargoName-Edit").value
       const cargoInputCount = document.getElementById("cargoCount-Edit").value
-      console.log("1",cargoID)
-      console.log("2",cargoInputName)
-      console.log("3",cargoInputCount)
-      if (cargoID && cargoInputCount && cargoInputCount){
-        console.log("Nezshel")
+      if (cargoID && cargoInputCount && cargoInputCount && Number(cargoInputCount) > -1 && Number(cargoInputCount) < 9999){
         this.editCargo({cargoID, newCargoAmount : cargoInputCount, newProductInCargo : cargoInputName})
         cargoCloseHandler()
       }
     }
-    cagroEditDialog.querySelector(".dialog-ok__btn").addEventListener("click", cargoOkHandler)
+    cagroEditDialog.querySelector(".dialog-ok__btn").addEventListener("click",(event) => cargoOkHandler(event))
     cagroEditDialog.querySelector(".dialog-close__btn").addEventListener("click", cargoCloseHandler)
   };
 
-  //TODO
   scrubAllOrderlists = async () => {
     var today = new Date();
     var dd = String(today.getDate()).padStart(2, '0');
-    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
     var yyyy = today.getFullYear();
-
     today = yyyy + '-' + mm + '-' + dd;
-    console.log(this.#orderlists)
-    this.#orderlists.forEach(order => { console.log(order.orderlistID) })
+  
     try {
       for (const order of this.#orderlists){
-        console.log('today',today)
-        console.log('orderday',order.orderlistDate)
         if  (order.orderlistDate == today)
         order.deleteOrderlist()
       }
       //заглушка
-      const warehouse = await AppModel.updateWarehouse({productName: 'Мемы' ,productAmount : 0 })
-      console.log(warehouse)
+      const warehouseResult = await AppModel.updateWarehouse({productName: 'Мемы' ,productAmount : 0 })
+      console.log(warehouseResult)
     } catch (error) {
-      console.error(error)
-          
+      console.error(error)  
     }
-
-    console.log('workbtn')
   }
 
   async init() {
@@ -323,9 +295,9 @@ export default class {
     });
 
     try {
-      const orderlists = await AppModel.getOrderlists();
-      console.log(orderlists)
-      for (const orderlist of orderlists) {
+      const orderlistsResult = await AppModel.getOrderlists();
+      console.log(orderlistsResult)
+      for (const orderlist of orderlistsResult) {
         const orderlsitObj = new Orderlist ({
           orderlistID: orderlist.orderlistID,
           name: orderlist.orderlistName,
@@ -335,19 +307,15 @@ export default class {
           onDeleteCargo: this.onDeleteCargo
         });
         this.#orderlists.push(orderlsitObj);
-        console.log('massive',this.#orderlists)
         orderlsitObj.render();
         const liElement = document.getElementById(orderlist.orderlistID);
         const currEls = Array.from(liElement.querySelectorAll('.orderlist-adder__input'))
         currEls.forEach((currentInputElement) =>{
           if (currentInputElement.type == 'date') {
             currentInputElement.value = orderlist.orderlistDate
-            console.log('orderlistname', orderlist.orderlistDate)
-            console.log(currentInputElement.value)
             if (currentInputElement.value != '') currentInputElement.readOnly = true
           }
           if (currentInputElement.type == 'text') {
-            console.log('orderlistname', orderlist.orderlistName)
             currentInputElement.value = orderlist.orderlistName
             if (currentInputElement.value != '') currentInputElement.readOnly = true
           }

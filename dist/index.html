@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;600&display=swap" rel="stylesheet">
   <title>Custom Cargo Manager</title>
-  <script type="module" crossorigin src="/index-2ZkBuqZQ.js"></script>
-  <link rel="stylesheet" crossorigin href="/index-LWaN1Zaj.css">
+  <script type="module" crossorigin src="/index-iQRVfWDX.js"></script>
+  <link rel="stylesheet" crossorigin href="/index-GbgBUEa2.css">
 </head>
 <body>
   <dialog class="app-modal" id = app-add-modal>
     <form method="dialog" class="app-modal__form">
       <select name="name" class="cargo-name" id = "cargoName-Add" placeholder="Название груза" required>
       </select>
-      <input type="number" name="amount" class="cargo-amount" id = "cargoCount-Add" placeholder="Количество груза" min="1" required>
+      <input type="number" name="amount" class="cargo-amount" id = "cargoCount-Add" placeholder="Количество груза" required = "required">
       <button type="submit" class="dialog-ok__btn">OK</button>
     </form>
     <button type="cancel" class="dialog-close__btn">Отмена</button>
@@ -22,7 +22,7 @@
     <form method="dialog" class="app-modal__form">
       <select name="name" class="cargo-name" id = "cargoName-Edit" placeholder="Название груза" required>
       </select>
-      <input type="number" name="amount" class="cargo-amount" id = "cargoCount-Edit" placeholder="Количество груза" min="1" required>
+      <input type="number" name="amount" class="cargo-amount" id = "cargoCount-Edit" placeholder="Количество груза" required = "required">
       <button type="submit" class="dialog-ok__btn">OK</button>
     </form>
     <button type="cancel" class="dialog-close__btn">Отмена</button>
