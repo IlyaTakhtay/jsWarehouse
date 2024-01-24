@@ -1,29 +1,36 @@
+import AppModel from '../model/AppModel';
 import Cargo from './Cargo';
 
 export default class Orderlist {
-  static counter = 1;
   #cargos = [];
   #orderlistName = '';
-  #orderlistID = '';
+  #orderlistID = null;
+  #orderlistDate = '';
   #orderlistPosition = -1;
 
   constructor({
+    orderlistID = null,
     name,
+    date,
     position,
     onDropCargoInOrderlist,
     onDeleteCargo,
   }) {
     this.#orderlistName = name;
-    this.#orderlistID = crypto.randomUUID();
+    this.#orderlistDate = date;
+    this.#orderlistID = orderlistID || crypto.randomUUID();
     this.#orderlistPosition = position;
     this.onDropCargoInOrderlist = onDropCargoInOrderlist;
     this.onDeleteCargo = onDeleteCargo;
-    this.order = Orderlist.counter++;
   }
 
   get orderlistID() { return this.#orderlistID; }
+  get orderlistName() { return this.#orderlistName; }
+  get orderlistDate() { return this.#orderlistDate; }
 
-  addCargo = ({ cargo }) => this.#cargos.push(cargo);
+  get orderlistPosition() { return this.#orderlistPosition; }
+
+  pushCargo = ({ cargo }) => this.#cargos.push(cargo);
 
   getCargoByID = ({ cargoID }) => this.#cargos.find(cargo => cargo.cargoID === cargoID);
 
@@ -38,10 +45,16 @@ export default class Orderlist {
 
     return deletedCargo;
   };
-  deleteOrderlist = () => {
+  deleteOrderlist = async ( ) => {
+    try {
+      const deleteOrderlsitResult = await AppModel.deleteOrderlist( {orderID: this.#orderlistID} );
+
+      console.log(deleteOrderlsitResult)
+    } catch (err) {
+      console.error(err)
+    }
     const orderlistElement = document.getElementById(this.#orderlistID);
     orderlistElement.remove();
-    this.decrementCounter();
     console.log("del")//
   };
 
@@ -59,43 +72,107 @@ export default class Orderlist {
     console.log(this.#cargos);
   };
 
-  decrementCounter() {
-    // Проверяем, чтобы счетчик не уходил в отрицательное значение
-    Orderlist.counter = Math.max(1, Orderlist.counter - 1);
-  }
-
-  onEditOrderlist = () => {
+  onEditOrderlist = async () => {
     const liElement = document.getElementById(this.#orderlistID);
     var inputElements = Array.from(liElement.querySelectorAll('.orderlist-adder__input'))
+    var Changed = false
     inputElements.forEach((currentInputElement) => {
-      if (currentInputElement.hasAttribute('readOnly')){
-        currentInputElement.readOnly = false
-      } else{
-        currentInputElement.readOnly = true
+      if (currentInputElement.value){
+        // можно ещё проверять совпадают ли значения 
+        if ((currentInputElement.type == 'text') && (this.#orderlistName != currentInputElement.value)) {
+          this.#orderlistName = currentInputElement.value
+          console.log('Новый текст',this.#orderlistName)
+          Changed = true
+        }
+        if ((currentInputElement.type == 'date') && (this.#orderlistDate != currentInputElement.value))  {
+          this.#orderlistDate = currentInputElement.value
+          console.log('Новый новая дата',this.#orderlistDate)
+          Changed = true
+        }
+        if (currentInputElement.hasAttribute('readOnly')){
+          currentInputElement.readOnly = false
+        } else{
+          currentInputElement.readOnly = true
+        }
       }
     })
+    if (Changed){
+      try {
+        console.log(this.#orderlistName)
+      const updateOrderlistResult = await AppModel.updateOrderlist( {
+        orderID: this.#orderlistID,
+        name: this.#orderlistName,
+        orderDate: this.#orderlistDate,
+        position: this.#orderlistPosition
+      } )
+      console.log(updateOrderlistResult)
+      } catch (err) {
+        console.error(err)
+      }
+    }  
   };
 
-  appendNewCargo = ({ productInCargo, amount }) => {
+  appendNewCargo = async ({ productInCargo, amount }) => {
     const finded = this.#cargos.find(cargo => cargo.productInCargo === productInCargo)
+    
     if (finded) {
       finded.cargoAmount = String(Number(finded.cargoAmount) + Number(amount))
       document.querySelector(`[id="${finded.cargoID}"] span.cargo__text`).innerHTML = this.#cargos[finded.cargoPosition].cargoAmount
-      console.log(this.#cargos)
+
+      try {
+        console.log('yep2',finded)
+        console.log('yep2',finded.productInCargo )
+        const updateCargoResult = await AppModel.updateCargo({
+          cargoID: finded.cargoID, 
+          cargoCount : Number(finded.cargoAmount),
+        });
+
+        console.log(updateCargoResult)
+      } catch (err) {
+        console.error(err)
+      }
     } else {
-      const newCargo = new Cargo({
-        amount,
-        productInCargo,
-        position: this.#cargos.length,
-        selectedOption: this.selectedOption,
-        onDeleteCargo: this.onDeleteCargo
-      });
-      this.#cargos.push(newCargo);
-          const newCargoElement = newCargo.render();
-          document.querySelector(`[id="${this.#orderlistID}"] .orderlist__cargo-list`)
-          .appendChild(newCargoElement);
+
+      try {
+        const cargoID = crypto.randomUUID();
+        const addCargoResult = await AppModel.addCargo({
+          cargoID,
+          cargoName: productInCargo,
+          cargoCount: amount,
+          orderID: this.#orderlistID,
+          position: this.#cargos.length,
+        });
+
+        this.addNewCargoLocal({
+          cargoID, 
+          amount: amount, 
+          productInCargo: productInCargo, 
+          position: this.#cargos.length
+        });
+        
+        console.log(addCargoResult);
+      } catch (err) {
+        console.error(err);
+      }
+
+      
     }
-  }
+  };
+
+  addNewCargoLocal = ( {cargoID = null, amount, productInCargo, position } ) => {
+    const newCargo = new Cargo({
+      cargoID,
+      amount,
+      productInCargo,
+      position,
+      selectedOption: this.selectedOption,
+      onDeleteCargo: this.onDeleteCargo
+    });
+    this.#cargos.push(newCargo);
+    const newCargoElement = newCargo.render();
+    document.querySelector(`[id="${this.#orderlistID}"] .orderlist__cargo-list`)
+    .appendChild(newCargoElement);
+  };
 
   renderDeleteButton = () => {
     const deleteButton = document.createElement('button');

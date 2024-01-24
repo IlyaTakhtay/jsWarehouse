@@ -1,9 +1,10 @@
 import Orderlist from './Orderlist';
+import AppModel from '../model/AppModel';
 
 export default class {
   #orderlists = [];
 
-  onDropCargoInOrderlist = (evt) => {
+  onDropCargoInOrderlist = async (evt) => {
     evt.stopPropagation();
 
     const destOrderlistElement = evt.currentTarget;
@@ -21,25 +22,33 @@ export default class {
     const srcOrderlist = this.#orderlists.find(orderlist => orderlist.orderlistID === srcOrderlistID);
     const destOrderlist = this.#orderlists.find(orderlist => orderlist.orderlistID === destOrderlistID);
 
-    if (srcOrderlistID !== destOrderlistID) {
-      const movedCargo = srcOrderlist.deleteCargo({ cargoID: movedCargoID });
-      destOrderlist.addCargo({ cargo: movedCargo });
+    try {
+      
+      if (srcOrderlistID !== destOrderlistID) {
+        const moveCargoResult = await AppModel.moveCargo( {
+          cargoID:movedCargoID,
+          srcOrderID: srcOrderlistID,
+          destOrderID: destOrderlistID
+        } )
 
-      srcOrderlist.reorderCargos();
+        const movedCargo = srcOrderlist.deleteCargo({ cargoID: movedCargoID });
+        destOrderlist.pushCargo({ cargo: movedCargo });
+  
+        srcOrderlist.reorderCargos();
+        console.log(moveCargoResult)
+      }
+  
+      destOrderlist.reorderCargos();
+      
+    } catch (err) {
+      console.error(err)
     }
 
-    const destCargosIDs = Array.from(
-      destOrderlistElement.querySelector('.orderlist__cargo-list').children,
-      elem => elem.getAttribute('id')
-    );
 
-    destCargosIDs.forEach((cargoID, position) => {
-      destOrderlist.getCargoByID({ cargoID }).cargoPosition = position;
-    });
 
   };
 
-  EditCargo = ({ cargoID, newProductInCargo, newCargoAmount }) => {
+  editCargo = async ({ cargoID, newProductInCargo, newCargoAmount }) => {
     let findedCargo = null;
     let findedOrderlist = null;
     for (let orderlist of this.#orderlists) {
@@ -62,14 +71,26 @@ export default class {
     if ((!newCargoAmount || newCargoAmount === currentCargoAmount) && 
     (!newProductInCargo || newProductInCargo === currentProductInCargo)) return;  
     
-    findedCargo.cargoAmount = newCargoAmount;
-    findedCargo.productInCargo = newProductInCargo;
+    try {
+      const updateCargoResult = await AppModel.updateCargo({
+        cargoID, 
+        cargoName : newProductInCargo, 
+        cargoCount : newCargoAmount,
+      });
 
-    document.querySelector(`[id="${cargoID}"] span.cargo__text`).innerHTML = newCargoAmount;
-    document.querySelector(`[id="${cargoID}"] span.cargo__number`).innerHTML = newProductInCargo;
+      findedCargo.cargoAmount = newCargoAmount;
+      findedCargo.productInCargo = newProductInCargo;
+
+      document.querySelector(`[id="${cargoID}"] span.cargo__text`).innerHTML = newCargoAmount;
+      document.querySelector(`[id="${cargoID}"] span.cargo__number`).innerHTML = newProductInCargo;
+
+      console.log(updateCargoResult)
+    } catch (err) {
+      console.error(err)
+    }
   };
 
-  onDeleteCargo = ({ cargoID }) => {
+  onDeleteCargo = async ({ cargoID }) => {
     let findedCargo = null;
     let findedOrderlist = null;
     for (let orderlist of this.#orderlists) {
@@ -82,33 +103,71 @@ export default class {
     // const cargoShouldBeDeleted = confirm(`Задача '${findedCargo.cargoAmount}' будет удалена. Прододлжить?`);
 
     // if (!cargoShouldBeDeleted) return;
+    try {
+      const deleteCargoResult = await AppModel.deleteCargo( {cargoID} );
 
-    findedOrderlist.deleteCargo({ cargoID });
+      findedOrderlist.deleteCargo({ cargoID });
+      document.getElementById(cargoID).remove();
+      
+      console.log(deleteCargoResult)
+    } catch (err) {
+      console.error(err)
+    }
 
-    document.getElementById(cargoID).remove();
   };
 
-  //струячим обновление селектора с данными заказа
-  cargoNameAddSelectorAppend = () => {
-    const selector = document.getElementById("cargoName-Add")
-    const optionElement = document.createElement('option')
-    optionElement.text = "HrenSgory"
-    selector.add(optionElement)
-   }
-  //струячим обновление селектора с данными заказа
-  //струячим обновление селектора с данными заказа
-  cargoNameEditSelectorAppend = () => {
-    const selector = document.getElementById("cargoName-Edit")
-    const optionElement = document.createElement('option')
-    optionElement.text = "HrenSgory"
-    selector.add(optionElement)
+  addEmptyOrderlist = async () => {
+
+    const orderlistID = crypto.randomUUID();
+    try {
+      const addOrderlistResult = await AppModel.addOrderlist({
+        orderID: orderlistID, 
+        position: this.#orderlists.length
+        });
+
+        const newOrderlist = new Orderlist({
+          orderlistID,
+          position: this.#orderlists.length,
+          onDropCargoInOrderlist: this.onDropCargoInOrderlist,
+          onDeleteCargo: this.onDeleteCargo
+        });
+        this.#orderlists.push(newOrderlist);
+        newOrderlist.render();
+        console.log(addOrderlistResult)
+    } catch (error) {
+      console.error(error)
     }
-  //струячим обновление селектора с данными заказа
+      
+    document.querySelectorAll('.orderlist-adder__input').forEach((currentInputElement) => {
+      currentInputElement.style.display = 'inherit'
+    });
+  }
+
+  cargoNameSelectorAppender = async ( {selector} ) => {
+    console.log('get inside Add')
+    var selector
+    if (selector == 'ADD') { selector = document.getElementById("cargoName-Add")}
+    if (selector == 'EDIT') { selector = document.getElementById("cargoName-Edit")}
+    try {
+      const productsList = await AppModel.getListOfProducts()
+      console.log(productsList)
+      productsList.forEach( product => {
+        console.log(product)
+        const optionElement = document.createElement('option')
+        optionElement.text = product
+        selector.add(optionElement)
+      })
+      console.log(productsList)
+    } catch (error) {
+      console.error(error)
+    }
+
+   }
 
   initAddModal = () => {
     const cagroAddDialog = document.getElementById("app-add-modal");
     console.log(cagroAddDialog)
-    this.cargoNameAddSelectorAppend();
+    this.cargoNameSelectorAppender({ selector: 'ADD'});
     const cargoCloseHandler = () => {
       cagroAddDialog.close()
       localStorage.setItem("addOrderlistID", '');
@@ -136,7 +195,7 @@ export default class {
   initEditModal = () => {
     const cagroEditDialog = document.getElementById("app-edit-modal");
     console.log("no",cagroEditDialog)
-    this.cargoNameEditSelectorAppend();
+    this.cargoNameSelectorAppender({ selector: 'EDIT' });
     const cargoCloseHandler = () => {
       cagroEditDialog.close()
       localStorage.setItem("editCargoID", '');
@@ -152,7 +211,7 @@ export default class {
       console.log("3",cargoInputCount)
       if (cargoID && cargoInputCount && cargoInputCount){
         console.log("Nezshel")
-        this.EditCargo({cargoID, newCargoAmount : cargoInputCount, newProductInCargo : cargoInputName})
+        this.editCargo({cargoID, newCargoAmount : cargoInputCount, newProductInCargo : cargoInputName})
         cargoCloseHandler()
       }
     }
@@ -160,26 +219,24 @@ export default class {
     cagroEditDialog.querySelector(".dialog-close__btn").addEventListener("click", cargoCloseHandler)
   };
 
-  init() {
-    document.querySelector('.orderlist-adder__btn')
-      .addEventListener(
-        'click',
-        (event) => {
-            const newOrderlist = new Orderlist({
-              name: event.target.value,
-              onDropCargoInOrderlist: this.onDropCargoInOrderlist,
-              onDeleteCargo: this.onDeleteCargo
-            });
-            
-            this.#orderlists.push(newOrderlist);
-            newOrderlist.render();
+  //TODO
+  scrubAllOrderlists = async () => {
+    console.log(this.#orderlists)
+    this.#orderlists.forEach(order => { console.log(order) })
+    try {
+      const warehouse = await AppModel.updateWarehouse({productName: 'Мемы' ,productAmount : 10 })
+      console.log(warehouse)
+    } catch (error) {
+      console.error(error)
           
-          document.querySelectorAll('.orderlist-adder__input').forEach((currentInputElement) => {
-            currentInputElement.style.display = 'inherit'
-          });
-        }
-      )
+    }
 
+    console.log('workbtn')
+  }
+
+  async init() {
+    document.querySelector('.orderlist-adder__btn').addEventListener('click', this.addEmptyOrderlist)
+    document.querySelector('.floating__btn').addEventListener('click', this.scrubAllOrderlists)
     this.initAddModal();
     this.initEditModal();
 
@@ -243,5 +300,53 @@ export default class {
           .appendChild(draggedElement);
       }
     });
+
+    try {
+      const orderlists = await AppModel.getOrderlists();
+      console.log(orderlists)
+      for (const orderlist of orderlists) {
+        const orderlsitObj = new Orderlist ({
+          orderlistID: orderlist.orderlistID,
+          name: orderlist.orderlistName,
+          date: orderlist.orderlistDate,
+          position: orderlist.orderlistPosition,
+          onDropCargoInOrderlist: this.onDropCargoInOrderlist,
+          onDeleteCargo: this.onDeleteCargo
+        });
+        this.#orderlists.push(orderlsitObj);
+        console.log('massive',this.#orderlists)
+        orderlsitObj.render();
+        const liElement = document.getElementById(orderlist.orderlistID);
+        const currEls = Array.from(liElement.querySelectorAll('.orderlist-adder__input'))
+        currEls.forEach((currentInputElement) =>{
+          if (currentInputElement.type == 'date') {
+            currentInputElement.value = orderlist.orderlistDate
+            console.log('orderlistname', orderlist.orderlistDate)
+            console.log(currentInputElement.value)
+            if (currentInputElement.value != '') currentInputElement.readOnly = true
+          }
+          if (currentInputElement.type == 'text') {
+            console.log('orderlistname', orderlist.orderlistName)
+            currentInputElement.value = orderlist.orderlistName
+            if (currentInputElement.value != '') currentInputElement.readOnly = true
+          }
+        })
+        document.querySelectorAll('.orderlist-adder__input').forEach((currentInputElement) => {
+          currentInputElement.style.display = 'inherit'
+        });
+        for (const cargo of orderlist.cargos) {
+          orderlsitObj.addNewCargoLocal({
+            cargoID: cargo.cargoID,
+            amount: cargo.cargoAmount,
+            productInCargo: cargo.productInCargo,
+            position: cargo.cargoPosition
+          })
+        }
+
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
   }
 };

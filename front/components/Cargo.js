@@ -5,12 +5,13 @@ export default class Cargo {
   #cargoPosition = -1;
 
   constructor({
+    cargoID = null,
     amount,
     position,
     productInCargo,
     onDeleteCargo
   }) {
-    this.#cargoID = crypto.randomUUID();
+    this.#cargoID = cargoID || crypto.randomUUID();
     this.#cargoAmount = amount;
     this.#cargoPosition = position;
     this.#productInCargo = productInCargo;

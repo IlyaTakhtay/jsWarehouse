@@ -78,9 +78,9 @@ body.dark-theme {
 .user-info__avatar {
   width: clamp(2rem, 6vw, 5rem);
   height: clamp(2rem, 6vw, 5rem);
-  border-radius: 50%;
+  border-radius: 10%;
   border: 2px solid var(--white-color);
-  background: url(images/keanu.jpg) center / cover;
+  background: url(images/boss.jpg) center / cover;
 }
 
 .user-info__username {
@@ -315,6 +315,7 @@ body.dark-theme {
   width: 9vw;
   border-radius: 10px;
   font-size: clamp(0.75rem, 1.1vw, 2rem);
+  background-color: var(--base-font-family);
   /* border: none;
   background: none;
   
@@ -409,4 +410,20 @@ body.dark-theme {
 .app-modal__btn {
   cursor: pointer;
   padding: 5px;
+}
+
+.floating__btn{
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--blue-30-color);
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+.floating__btn:hover {
+  background-color: var(--blue-50-color);
 }

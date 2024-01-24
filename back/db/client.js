@@ -6,7 +6,7 @@ function getDate () {
   var dd = String(today.getDate()).padStart(2, '0');
   var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
   var yyyy = today.getFullYear();
-  today = dd + '/' + mm + '/' + yyyy;
+  today = yyyy + '-' + mm + '-' + dd;
 return today
 }
 
@@ -71,10 +71,17 @@ class DB {
 
   async getListOfCargo( {orderID}) {
     try {
-      const [productlist] = await this.#dbClient.query( 
-        'SELECT * FROM test.order_list WHERE order_id = ?;'
-        ,[orderID]
-      );
+      var [productlist] = []
+      if (orderID){
+        [productlist] = await this.#dbClient.query( 
+          'SELECT * FROM test.order_list WHERE order_id = ?;'
+          ,[String(orderID)]
+        );
+      } else {
+        [productlist] = await this.#dbClient.query( 
+          'SELECT * FROM test.order_list'
+        );
+      }
       return (productlist);
     } catch (error) {
       console.log('Unable to get cargo list, error', error);
@@ -86,40 +93,22 @@ class DB {
   }
 
   // возможно сюда придется добавить параметр типо where order_id = orderID
-  async getListOfOrder() {
-    try {
-      const [orderlist] = await this.#dbClient.query( 
-        'SELECT * FROM test.order_list'
-      );
-      return(orderlist);
-
-    } catch (error) {
-      console.log('Unable get orders, error', error);
-      return Promise.reject({
-        type: 'internal',
-        error
-      })
-    }
-  }
-
-  async getListOfOrders( { TODAY } ) {
+  async getListOfOrder( { TODAY } ) {
     try {
       if (TODAY) {
         const orderDate = getDate();
+        console.log(orderDate)
         const [orderlist] = await this.#dbClient.query(
-          'SELECT * FROM orders_list WHERE order_date = DATE(?)',
-          [orderDate]
+          'SELECT * FROM orders_list WHERE order_date >= DATE(?)',
+          [String(orderDate)]
         );
         return(orderlist);
-
-      } else {
-        const [orderlist] = await this.#dbClient.query(
-          'SELECT * FROM orders_list'
+        } else {
+        const [orderlist] = await this.#dbClient.query( 
+          'SELECT * FROM test.orders_list'
         );
         return(orderlist);
       }
-
-
     } catch (error) {
       console.log('Unable get orders, error', error);
       return Promise.reject({
@@ -128,8 +117,8 @@ class DB {
       })
     }
   }
-  // ???? по идее у нас ордер пустой добавляется, поэтому не надо таких проверок делать
-  async addOrder ({
+
+  async updateOrder ({
     orderID, 
     name, 
     orderDate, 
@@ -140,7 +129,7 @@ class DB {
     orderDate: '', 
     position: -1
   }) {
-    if (!orderID || !name || !orderDate || position <0) {
+    if (!orderID || (!name && !orderDate) || position <0) {
       const errMsg = `Add order has wrong params: orderID: ${orderID}, name: ${name}, 
       ${orderDate},position:${position}`;
       console.error(errMsg);
@@ -149,7 +138,7 @@ class DB {
         error: new Error(errMsg)
       })
     }
-
+  var regex = /^\d{4}-\d{2}-\d{2}$/;
     if (regex.test(orderDate)){
     } else {
       const errFormat = `Date has wrong format ${orderDate}`;
@@ -160,11 +149,21 @@ class DB {
       })
     }
 
+    let query = null;
+    const queryParams = [];
+    if (name && orderDate) {  
+      query = 'UPDATE orders_list SET customer_name = ?, order_date = ? WHERE order_id = ?'
+      queryParams.push(String(name), String(orderDate), String(orderID))
+    } else if (name) {  
+      query = 'UPDATE orders_list SET customer_name = ? WHERE order_id = ?'
+      queryParams.push(String(name), String(orderID))
+    } else {  
+      query = 'UPDATE orders_list SET order_date = ? WHERE order_id = ?'
+      queryParams.push(String(orderDate), String(orderID))
+    }
+
     try {
-      await this.#dbClient.query( 
-        'INSERT into ORDERS_LIST (order_id, customer_name, order_date)  VALUES (?, ?, ?);',
-        [orderID, name, orderDate]
-      );
+      await this.#dbClient.query(query,queryParams);
     } catch (error) {
       console.log('Unable add orders, error', error);
       return Promise.reject({
@@ -173,6 +172,35 @@ class DB {
       })
     }
 
+  }
+
+  async addOrder ({
+    orderID, 
+    position = -1 
+  } = {
+    orderID: null, 
+    position: -1
+  }) {
+    if (!orderID || position <0) {
+      const errMsg = `Add order has wrong params: orderID: ${orderID}, position:${position}`;
+      console.error(errMsg);
+      return Promise.reject({
+        type: 'client',
+        error: new Error(errMsg)
+      })
+    }
+    try {
+      await this.#dbClient.query( 
+        'INSERT into ORDERS_LIST (order_id) VALUES (?);',
+        [orderID]
+      );
+    } catch (error) {
+      console.log('Unable add orders, error', error);
+      return Promise.reject({
+        type: 'internal',
+        error
+      })
+    }
     
   }
 
@@ -186,7 +214,7 @@ class DB {
     cargoID: null, 
     cargoName: '',
     cargoCount: '',
-    orderID: '',
+    orderID: null,
     position: -1
   }) {
     if (!cargoID || !cargoName || !cargoCount || !orderID || position <0) {
@@ -200,9 +228,13 @@ class DB {
     }
   
     try {
+      console.log ('GOT PARAMS',cargoID, 
+        cargoName, 
+        cargoCount,
+        orderID,)
       await this.#dbClient.query( 
         'INSERT into ORDER_LIST (cargo_id, product_name, product_count_order, order_id) VALUES (?, ?, ?, ?);',
-        [cargoID, cargoName, cargoCount, orderID]
+        [String(cargoID), String(cargoName), Number(cargoCount), String(orderID)]
       );
     } catch (error) {
       console.log('Unable add cargo, error', error);
@@ -223,13 +255,13 @@ class DB {
     cargoID: null, 
     cargoName: '',
     cargoCount: '',
-    orderID: '',
+    orderID: null,
     position: -1
   }) {
 
-    if (!cargoID || !orderID || ( !cargoName && !cargoCount && position <0)) {
+    if (!cargoID || ( !orderID && !cargoName && !cargoCount && position <0)) {
       const errCargo = `Update Cargo has wrong params: cargoID: ${cargoID}, name: ${cargoName}, 
-      ${cargoCount}, ${orderID}, position:${position}`;
+      cargoCount:${cargoCount},orderID:${orderID}, position:${position}`;
       console.error(errCargo);
       return Promise.reject({
         type: 'client',
@@ -239,17 +271,30 @@ class DB {
 
     let query = null;
     const queryParams = [];
-    if (cargoName && cargoCount) {  
+    if (cargoName && cargoCount && orderID) {  
+      query = 'UPDATE order_list SET product_count_order = ?, product_name = ?, order_id =? WHERE cargo_id = ?'
+      queryParams.push(Number(cargoCount), String(cargoName), String(orderID), String(cargoID))
+    } else if (cargoName && orderID) {  
+      query = 'UPDATE order_list SET product_name = ?, order_id =? WHERE cargo_id = ?'
+      queryParams.push(String(cargoName), String(orderID), String(cargoID))
+    } else if (cargoCount && orderID) {  
+      query = 'UPDATE order_list SET product_count_order = ?, order_id =? WHERE cargo_id = ?'
+      queryParams.push(Number(cargoCount), String(orderID), String(cargoID))
+    } else if (cargoCount && cargoName) {  
       query = 'UPDATE order_list SET product_count_order = ?, product_name = ? WHERE cargo_id = ?'
-      queryParams.push(cargoCount, cargoName, cargoID)
+      queryParams.push(Number(cargoCount), String(cargoName), String(cargoID))
+    } else if (orderID) {  
+      query = 'UPDATE order_list SET order_id =? WHERE cargo_id = ?'
+      queryParams.push(String(orderID), String(cargoID))
     } else if (cargoName) {  
-      query = 'UPDATE order_list SET product_name = ? WHERE cargo_id = ?'
-      queryParams.push(cargoName, cargoID)
+      query = 'UPDATE order_list SET product_name =? WHERE cargo_id = ?'
+      queryParams.push(String(cargoName), String(cargoID))
     } else {  
       query = 'UPDATE order_list SET product_count_order = ? WHERE cargo_id = ?'
-      queryParams.push(cargoCount, cargoID)
+      queryParams.push(Number(cargoCount), String(cargoID))
     }
-
+    console.log(query)
+    console.log('query params',queryParams)
     try {
       await this.#dbClient.query(query,queryParams);
     } catch (error) {
@@ -284,7 +329,7 @@ class DB {
     try {
       await this.#dbClient.query( 
         'UPDATE orders_list SET customer_name = ?, order_date = ? WHERE order_id = ?',
-        [customerName, orderDate, orderID]
+        [String(customerName), String(orderDate), String(orderID)]
       );
     } catch (error) {
       console.log('Unable update ordersList, error', error);
@@ -323,7 +368,7 @@ class DB {
   async deleteOrder ({ orderID } = { orderID: null }) {
 
     if (!orderID) {
-      const errCargo = `Update OrdersList has wrong params: orderID: ${orderID}`;
+      const errCargo = `Delete OrdersList has wrong params: orderID: ${orderID}`;
       console.error(errCargo);
       return Promise.reject({
         type: 'client',
@@ -351,18 +396,16 @@ class DB {
     }
   }
 
-  // Хуй с ним. Надо чекнуть работает ли это гавно или нет и заебись будет
-  //МММ. А нахуй нам это надо ? Или может нам какой-то другой апдейт тогда нахер не нужен
+
   async moveCargo ({
     cargoID, 
     srcOrderID, 
     destOrderID
   } = {
     cargoID : null, 
-    srcOrderID : null, 
+    srcOrderID : null,
     destOrderID : null 
   } ) {
-
     if (!cargoID || !srcOrderID || !destOrderID) {
       const errCargo = `Move Cargo has wrong params: cargoID: ${cargoID}, srcOrderID: ${srcOrderID}, destOrderID${destOrderID}`;
       console.error(errCargo);
@@ -375,10 +418,33 @@ class DB {
     try {
       await this.#dbClient.query( 
         'UPDATE order_list SET order_id = ? WHERE(order_id = ? and cargo_id = ?)',
-        [destOrderID, srcOrderID, cargoID]
+        [String(destOrderID), String(srcOrderID), String(cargoID)]
       );
     } catch (error) {
       console.log('Unable move cargo, error', error);
+      return Promise.reject({
+        type: 'internal',
+        error
+      })
+    }
+  }
+  // TODO
+  async increaseProductsAmount ({ productName, productAmount } = { productName : null, productAmount: -1} ) {
+    if (!productName || productAmount < 0){
+      const errCargo = `Move Cargo has wrong params: productName: ${productName}, productAmount: ${productAmount}`;
+      console.error(errCargo);
+      return Promise.reject({
+        type: 'client',
+        error: new Error(errCargo)
+      })
+    }
+    try {
+      await this.#dbClient.query( 
+        'UPDATE warehouse set warehouse_product_count = warehouse_product_count + ? WHERE warehouse.warehouse_product_name = ?',
+        [Number(productAmount), String(productName)]
+      );
+    } catch (error) {
+      console.log('Unable to get cargo list, error', error);
       return Promise.reject({
         type: 'internal',
         error
