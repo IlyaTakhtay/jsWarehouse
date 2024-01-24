@@ -46,10 +46,30 @@ app.get('/products', async(req,res) => {
         timestamp: new Date().toISOString(),
         statusCode : 500,
         // Чтение ошибок не работает
-        message : `Adding Orderlist error ${err.error || err.message}`
+        message : `Getting products error ${err.error || err.message}`
     });
   }
 });
+
+app.get('/productAmount/:productName', async(req,res) => {
+  try {
+    const {productName} = req.params;
+    const porductsList = await db.getListOfProducts({ productName: productName })
+    // const porductsList = dbProducts.map(product => product.warehouse_product_name)
+    res.statusMessage = 'OK';
+    res.json({ porductsList });
+  } catch (err) {
+    res.statusCode = 500;
+    res.statusMessage = 'Internal serever error';
+    res.json({
+        timestamp: new Date().toISOString(),
+        statusCode : 500,
+        // Чтение ошибок не работает
+        message : `Getting productCount error ${err.error || err.message}`
+    });
+  }
+});
+
 
 
 // body parsing middleware
@@ -378,7 +398,10 @@ app.patch('/warehouse', async (req,res) => {
 try{
   const { productName, productAmount } = req.body;
   console.log("warehouse params", productName, productAmount)
-  await db.increaseProductsAmount({ productName, productAmount });
+  /// for fake random warehouse update
+  const products = await db.getListOfProducts();
+  /// for fake random warehouse update
+  await db.increaseProductsAmount({ productName, productAmount, productItem:products });
   
   res.statusCode = 200;
   res.statusMessage = 'Ok',

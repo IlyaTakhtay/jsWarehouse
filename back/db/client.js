@@ -10,6 +10,7 @@ function getDate () {
 return today
 }
 
+
 class DB {
   #dbClient = null;
   #dbHost = '';
@@ -54,11 +55,20 @@ class DB {
     }
   }
 
-  async getListOfProducts() {
+  async getListOfProducts( {productName} = {productName:''} ) {
+    let query = null;
+    const queryParams = [];
+    console.log('Авто',productName)
+    if (!productName) {
+      console.log("noprodoName")
+      query = 'SELECT warehouse_product_name FROM test.warehouse;'
+    } else {
+      query = 'SELECT * FROM test.warehouse WHERE warehouse_product_name = ?;'
+      queryParams.push(String(productName))
+    }
+    
     try {
-      const [productlist] = await this.#dbClient.query( 
-        'SELECT warehouse_product_name FROM test.warehouse;'
-      );
+      const [productlist] = await this.#dbClient.query(query, queryParams);
       return (productlist);
     } catch (error) {
       console.log('Unable to get products list, error', error);
@@ -99,7 +109,7 @@ class DB {
         const orderDate = getDate();
         console.log(orderDate)
         const [orderlist] = await this.#dbClient.query(
-          'SELECT * FROM orders_list WHERE order_date >= DATE(?)',
+          'SELECT * FROM orders_list WHERE order_date >= DATE(?) OR order_date IS NULL',
           [String(orderDate)]
         );
         return(orderlist);
@@ -429,7 +439,7 @@ class DB {
     }
   }
   // TODO
-  async increaseProductsAmount ({ productName, productAmount } = { productName : null, productAmount: -1} ) {
+  async increaseProductsAmount ({ productName, productAmount, productItem } = { productName : null, productItem: '', productAmount: -1} ) {
     if (!productName || productAmount < 0){
       const errCargo = `Move Cargo has wrong params: productName: ${productName}, productAmount: ${productAmount}`;
       console.error(errCargo);
@@ -438,11 +448,26 @@ class DB {
         error: new Error(errCargo)
       })
     }
+    if (productItem != ''){
+      productItem.forEach(element => {
+        const count = Math.floor(Math.random() * (50 - 0) + 0);
+        element.warehouse_product_count = count
+      });
+    }
+
     try {
+      if (productItem != ''){
+        for (const product of productItem){
+          await this.#dbClient.query( 
+              'UPDATE warehouse SET warehouse_product_count = warehouse_product_count + ? WHERE warehouse_product_name = ?',
+              [product.warehouse_product_count, product.warehouse_product_name]
+            );
+        }
+      } else {
       await this.#dbClient.query( 
         'UPDATE warehouse set warehouse_product_count = warehouse_product_count + ? WHERE warehouse.warehouse_product_name = ?',
         [Number(productAmount), String(productName)]
-      );
+      );}
     } catch (error) {
       console.log('Unable to get cargo list, error', error);
       return Promise.reject({

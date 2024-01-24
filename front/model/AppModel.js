@@ -19,6 +19,29 @@ export default class AppModel {
         }
     }
 
+    static async getProductAmount( {productName} = {productName:''}){
+        try{
+            const productAmountResponse  = await fetch(
+                `http://localhost:8001/productAmount/${productName}`,
+                {
+                    method: 'GET',
+                }
+            );
+            const productAmountBody = await productAmountResponse.json();
+
+            if (productAmountResponse.status != 200){
+                return Promise.reject(productAmountBody);
+            }
+            return productAmountBody.porductsList;
+        } catch (err) {
+            return Promise.reject ({
+                timestamp: new Date().toISOString(),
+                statusCode: 0,
+                message: err.message
+            });
+        }
+    }
+
     static async getOrderlists(){
         try{
             const orderlistsResponse  = await fetch('http://localhost:8001/orderlists');
@@ -36,7 +59,6 @@ export default class AppModel {
             });
         }
     }
-
 
     static async addOrderlist({ orderID, position = -1 } = 
         { orderID: null, position: -1 }){

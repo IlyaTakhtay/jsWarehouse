@@ -1,14 +1,21 @@
 :root {
   --base-font-family: 'Fira Sans', sans-serif, Helvetica;
 
-  --blue-10-color: #93C4F5;
-  --blue-30-color: #7CBAF9;
-  --blue-50-color: #0e5eff;
-  --blue-70-color: #020275;
-  --blue-90-color: #01203F;
 
-  --seawave-30-color: #7FACAC;
-  --seawave-90-color: #053A47;
+  --yellow-01-color: #f5eadc;
+
+  --yellow-05-color: #faeac9;
+
+  --yellow-10-color: #f5d493;
+  --yellow-30-color: #f9d37c;
+  --yellow-50-color: #ffcf0e;
+  --yellow-70-color: #753a02;
+  --yellow-90-color: #3f1c01;
+
+  --red-30-color: #cf6a4e;
+
+  --chocolate-30-color: #ac8d7f;
+  --chocolate-90-color: #471b05;
 
   --white-color: white;
 
@@ -18,12 +25,14 @@
 
   --black-color: black;
 
-  --main-bg-start-color: var(--blue-30-color);
-  --main-bg-end-color: var(--seawave-30-color);
-  --main-header-text-color: var(--blue-70-color);
+  --main-bg-start-color: var(--yellow-30-color);
+  --main-bg-end-color: var(--chocolate-30-color);
+  --main-header-text-color: var(--yellow-70-color);
   --shadow-color: #00000029;
-  --orderlist-bg-color: #cbdff4bf;
-  --orderlist-last-bg-color: #cbdff473;
+
+  --orderlist-bg-color: #f4d9cbbf;
+  --orderlist-last-bg-color: #f4d3cb73;
+
 }
 
 * {
@@ -43,9 +52,9 @@ body {
 }
 
 body.dark-theme {
-  --main-bg-start-color: var(--blue-90-color);
-  --main-bg-end-color: var(--seawave-90-color);
-  --main-header-text-color: var(--blue-10-color);
+  --main-bg-start-color: var(--yellow-90-color);
+  --main-bg-end-color: var(--chocolate-90-color);
+  --main-header-text-color: var(--yellow-10-color);
 }
 
 #app-header {
@@ -110,7 +119,7 @@ body.dark-theme {
   bottom: 0;
   left: 0;
   border-radius: 1.5vh;
-  background-color: var(--blue-30-color);
+  background-color: var(--yellow-30-color);
   border: 1px solid var(--white-color);
   transition: .4s;
 }
@@ -128,7 +137,7 @@ body.dark-theme {
 }
 
 .toggle-switch__checkbox:checked + .toggle-switch__slider {
-  background-color: var(--blue-70-color);
+  background-color: var(--yellow-70-color);
 }
 
 .toggle-switch__checkbox:checked + .toggle-switch__slider::before {
@@ -163,7 +172,7 @@ body.dark-theme {
 }
 
 .orderlist.orderlist_droppable {
-  border: 2px dashed var(--blue-50-color);
+  border: 2px dashed var(--yellow-50-color);
 }
 
 .orderlist-heading__order-id{
@@ -176,13 +185,13 @@ body.dark-theme {
   font-size: clamp(0.75rem, 2vw, 2rem);
   font-weight: 600;
   margin-bottom: 1vw;
-  color: var(--blue-70-color);
+  color: var(--yellow-70-color);
 }
 
 .orderlist__name:hover {
   font-weight: 600;
-  background-color: var(--blue-30-color);
-  border-color: var(--blue-70-color);
+  background-color: var(--yellow-30-color);
+  border-color: var(--yellow-70-color);
   cursor: pointer;
 }
 
@@ -227,15 +236,15 @@ body.dark-theme {
   margin-bottom: 1vw;
   border-radius: 0.75vw;
   box-shadow: 2px 2px 4px var(--shadow-color);
-  background-color: var(--blue-10-color);
-  border: 2px solid var(--blue-10-color);
+  background-color: var(--yellow-10-color);
+  border: 2px solid var(--yellow-10-color);
   transition: background-color 0.5s ease, border-color 0.5s ease;
   cursor: move;
 }
 
 .cargo:hover {
-  background-color: var(--blue-30-color);
-  border-color: var(--blue-70-color);
+  background-color: var(--yellow-30-color);
+  border-color: var(--yellow-70-color);
 }
 
 .cargo__text {
@@ -267,6 +276,7 @@ body.dark-theme {
 
 .cargo-name {
   font-size: clamp(0.75rem, 1.3vw, 2rem);
+  background-color: var(--yellow-01-color);
   box-sizing: border-box;
     border-radius: 0.4vw;
     width: 100%;
@@ -276,6 +286,7 @@ body.dark-theme {
 
 .cargo-amount {
   font-size: clamp(0.75rem, 1.3vw, 2rem);
+  background-color: var(--yellow-01-color);
   box-sizing: border-box;
     border-radius: 0.4vw;
     width: 100%;
@@ -308,28 +319,22 @@ body.dark-theme {
   
   font-weight: 400;
   font-size: clamp(0.75rem, 2vw, 2rem);
-  color: var(--blue-70-color);
+  color: var(--yellow-70-color);
 }
 
 .dialog-close__btn {
   width: 9vw;
   border-radius: 10px;
   font-size: clamp(0.75rem, 1.1vw, 2rem);
-  background-color: var(--base-font-family);
-  /* border: none;
-  background: none;
-  
-  font-weight: 400;
-  font-size: clamp(0.75rem, 2vw, 2rem);
-  color: var(--blue-70-color); */
+  background-color: var(--red-30-color);
 }
 
 .dialog-ok__btn {
-  background: none;
+  /* background: none; */
   border-radius: 0.4vw;
   font-weight: 100;
   font-size: clamp(0.75rem, 1.1vw, 2rem);
-  color: var(--blue-70-color);
+  background-color: var(--yellow-30-color);
 }
 
 .orderlist-adder__btn:hover {
@@ -367,6 +372,7 @@ body.dark-theme {
 .app-modal[open]{
   padding-bottom: 1vh;
   border-radius: 0.8vw;
+  background-color: var(--yellow-05-color);
   border: none;
   margin: auto;
   display: flex;
@@ -416,7 +422,7 @@ body.dark-theme {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background-color: var(--blue-30-color);
+  background-color: var(--yellow-30-color);
   color: #fff;
   border: none;
   padding: 10px 20px;
@@ -425,5 +431,5 @@ body.dark-theme {
   border-radius: 5px;
 }
 .floating__btn:hover {
-  background-color: var(--blue-50-color);
+  background-color: var(--yellow-50-color);
 }

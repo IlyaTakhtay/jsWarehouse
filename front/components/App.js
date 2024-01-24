@@ -72,6 +72,13 @@ export default class {
     (!newProductInCargo || newProductInCargo === currentProductInCargo)) return;  
     
     try {
+      const currentAvailable = await AppModel.getProductAmount({productName:newProductInCargo})
+      console.log('ftechet',currentAvailable[0].warehouse_product_count)
+      console.log(newCargoAmount)
+      if (currentAvailable[0].warehouse_product_count <= Number(newCargoAmount)){
+        alert("Недостаточно на складе")
+        return;
+      }
       const updateCargoResult = await AppModel.updateCargo({
         cargoID, 
         cargoName : newProductInCargo, 
@@ -83,7 +90,8 @@ export default class {
 
       document.querySelector(`[id="${cargoID}"] span.cargo__text`).innerHTML = newCargoAmount;
       document.querySelector(`[id="${cargoID}"] span.cargo__number`).innerHTML = newProductInCargo;
-
+      
+      console.log(currentAvailable)
       console.log(updateCargoResult)
     } catch (err) {
       console.error(err)
@@ -221,10 +229,23 @@ export default class {
 
   //TODO
   scrubAllOrderlists = async () => {
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+
+    today = yyyy + '-' + mm + '-' + dd;
     console.log(this.#orderlists)
-    this.#orderlists.forEach(order => { console.log(order) })
+    this.#orderlists.forEach(order => { console.log(order.orderlistID) })
     try {
-      const warehouse = await AppModel.updateWarehouse({productName: 'Мемы' ,productAmount : 10 })
+      for (const order of this.#orderlists){
+        console.log('today',today)
+        console.log('orderday',order.orderlistDate)
+        if  (order.orderlistDate == today)
+        order.deleteOrderlist()
+      }
+      //заглушка
+      const warehouse = await AppModel.updateWarehouse({productName: 'Мемы' ,productAmount : 0 })
       console.log(warehouse)
     } catch (error) {
       console.error(error)

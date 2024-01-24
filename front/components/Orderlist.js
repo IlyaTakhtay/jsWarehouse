@@ -117,11 +117,19 @@ export default class Orderlist {
     
     if (finded) {
       finded.cargoAmount = String(Number(finded.cargoAmount) + Number(amount))
-      document.querySelector(`[id="${finded.cargoID}"] span.cargo__text`).innerHTML = this.#cargos[finded.cargoPosition].cargoAmount
-
+      document.querySelector(`[id="${finded.cargoID}"] span.cargo__text`).innerHTML = finded.cargoAmount
       try {
         console.log('yep2',finded)
         console.log('yep2',finded.productInCargo )
+
+        const currentAvailable = await AppModel.getProductAmount({productName:finded.productInCargo})
+        console.log('ftechet',currentAvailable[0].warehouse_product_count)
+        console.log(finded.cargoAmount)
+        if (currentAvailable[0].warehouse_product_count <= Number(finded.cargoAmount)){
+          alert("Недостаточно на складе")
+          return;
+        }
+
         const updateCargoResult = await AppModel.updateCargo({
           cargoID: finded.cargoID, 
           cargoCount : Number(finded.cargoAmount),

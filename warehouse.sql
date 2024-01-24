@@ -115,7 +115,7 @@ CREATE TABLE `warehouse` (
 
 LOCK TABLES `warehouse` WRITE;
 /*!40000 ALTER TABLE `warehouse` DISABLE KEYS */;
-INSERT INTO `warehouse` VALUES ('Автомобиль',6),('Мемы',2),('Самолет',100),('Танк',2000),('Узбеки',100000);
+INSERT INTO `warehouse` VALUES ('Автомобиль',6),('Мемы',2),('Самолет',100),('Танк',2000);
 /*!40000 ALTER TABLE `warehouse` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
